@@ -1,4 +1,3 @@
-```go
 package recon
 
 import (
@@ -64,4 +63,3 @@ func AnalyzeJSFiles(jsUrlsFile, outputFile string, cfg *config.Config) error {
 	}
 	return nil
 }
-```
