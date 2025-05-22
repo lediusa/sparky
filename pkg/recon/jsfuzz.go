@@ -1,4 +1,3 @@
-```go
 package recon
 
 import (
@@ -82,4 +81,3 @@ func JSFuzzing(urlsFile, outputFile string, cfg *config.Config) ([]string, error
 
 	return newJSFiles, nil
 }
-```
