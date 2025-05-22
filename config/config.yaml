@@ -1,6 +1,6 @@
 ```yaml
 paths:
-  subdomains: ./wordlists/subdomains.txt
+  subdomains: ./wordlists/wordlist.txt
   resolvers: ./wordlists/resolvers.txt
   backup_login: ./wordlists/backup_login.txt
   output_dir: ./output
