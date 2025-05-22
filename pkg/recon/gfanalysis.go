@@ -1,4 +1,3 @@
-```go
 package recon
 
 import (
@@ -41,4 +40,3 @@ func AnalyzeWithGF(inputFile, ssrfFile, sqliFile string) error {
 
 	return nil
 }
-```
