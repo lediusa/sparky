@@ -1,4 +1,3 @@
-```go
 package recon
 
 import (
@@ -223,4 +222,3 @@ func reconDomain(domain string, opts Options) {
 	GenerateReport(domain, outputDir, newSubdomains)
 	fmt.Printf("[*] Finished processing %s\n", domain)
 }
-```
