@@ -1,4 +1,3 @@
-```go
 package recon
 
 import (
@@ -42,4 +41,3 @@ func ScanSQLi(inputFile, outputFile string) error {
 	}
 	return nil
 }
-```
