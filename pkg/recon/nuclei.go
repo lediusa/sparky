@@ -3,7 +3,7 @@ package recon
 import (
 	"os"
 	"os/exec"
-	"sparky/pkg/config"
+	"github.com/lediusa/sparky/pkg/config"
 )
 
 func ScanNuclei(inputFile, outputFile string, cfg *config.Config) error {
