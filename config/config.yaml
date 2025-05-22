@@ -1,0 +1,14 @@
+```yaml
+paths:
+  subdomains: ./wordlists/subdomains.txt
+  resolvers: ./wordlists/resolvers.txt
+  backup_login: ./wordlists/backup_login.txt
+  output_dir: ./output
+  nuclei_templates: /path/to/nuclei-templates
+settings:
+  threads: 10
+  timeout: 30
+tools:
+  linkfinder: toolssparky/linkfinder/LinkFinder.py
+  secretfinder: toolssparky/SecretFinder/SecretFinder.py
+```
