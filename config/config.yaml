@@ -3,6 +3,7 @@ paths:
   subdomains: ./wordlists/wordlist.txt
   resolvers: ./wordlists/resolvers.txt
   backup_login: ./wordlists/backup_login.txt
+  js-smart-fuzzing: ~/wordlistjs.txt
   output_dir: ./output
   nuclei_templates: /path/to/nuclei-templates
 settings:
