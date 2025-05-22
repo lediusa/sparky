@@ -1,4 +1,3 @@
-```go
 package recon
 
 import (
@@ -92,4 +91,3 @@ func TestWebCacheDeception(urlsFile, outputFile string) ([]WCDResult, error) {
 	}
 	return cachedFiles, nil
 }
-```
