@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sparky/pkg/config"
+	"github.com/lediusa/sparky/pkg/config"
 )
 
 func ExtractJSUrls(inputFile, outputFile string) error {
