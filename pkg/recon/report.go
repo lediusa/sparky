@@ -1,4 +1,3 @@
-```go
 package recon
 
 import (
@@ -27,4 +26,3 @@ func GenerateReport(domain, outputDir string, newSubdomains []string) {
 }`, domain, newSubdomains)
 	os.WriteFile(filepath.Join(outputDir, "report.json"), []byte(jsonReport), 0644)
 }
-```
