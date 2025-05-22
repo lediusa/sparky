@@ -36,7 +36,9 @@ func JSFuzzing(urlsFile, outputFile string, cfg *config.Config) ([]string, error
 			continue
 		}
 		path := strings.Join(parts[3:len(parts)-1], "/")
-		jsPaths[path] = true
+		if path != "" {
+			jsPaths[path] = true
+		}
 	}
 
 	// Fuzz each path
@@ -46,7 +48,7 @@ func JSFuzzing(urlsFile, outputFile string, cfg *config.Config) ([]string, error
 			if strings.Contains(jsURL, path) {
 				baseURL := strings.Split(jsURL, "/")
 				domain := strings.Join(baseURL[:3], "/")
-				fuzzURL := fmt.Sprintf("%s/%s/FUZZ.js", domain, path)
+				fuzzURL := fmt.Sprintf("%s/%s/FUZZ", domain, path)
 				cmd := exec.Command("ffuf", "-w", cfg.Paths.JsSmartFuzzing, "-u", fuzzURL, "-mc", "200", "-o", outputFile+".tmp", "-of", "csv")
 				if err := cmd.Run(); err != nil {
 					continue
@@ -66,7 +68,7 @@ func JSFuzzing(urlsFile, outputFile string, cfg *config.Config) ([]string, error
 					if len(cols) < 2 {
 						continue
 					}
-					fuzzedURL := fmt.Sprintf("%s/%s/%s.js", domain, path, cols[0])
+					fuzzedURL := fmt.Sprintf("%s/%s/%s", domain, path, cols[0])
 					newJSFiles = append(newJSFiles, fuzzedURL)
 				}
 			}
