@@ -5,9 +5,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"sparky/pkg/config"
 	"sparky/pkg/deps"
 	"sparky/pkg/recon"
+	"strings"
 )
 
 const logo = `
@@ -22,12 +24,15 @@ const logo = `
 \033[37mSparky - Reconnaissance for Bug Hunters\033[0m
 `
 
+const modulePath = "github.com/lediusa/sparky"
+
 func main() {
 	fmt.Println(logo)
 
 	domain := flag.String("d", "", "Single domain to process (e.g., example.com)")
 	file := flag.String("f", "", "File containing list of domains")
 	installDeps := flag.Bool("id", false, "Install dependencies")
+	update := flag.Bool("update", false, "Check and update to the latest version")
 	vhost := flag.Bool("vhost", false, "Enable virtual host discovery")
 	smartFuzz := flag.Bool("sm", false, "Enable smart fuzzing on 403/404 subdomains")
 	sqli := flag.Bool("sqli", false, "Enable SQLi scanning with sqlmap")
@@ -37,8 +42,34 @@ func main() {
 	flag.Parse()
 
 	if *help {
-		fmt.Println("Usage: ./sparky [options]")
+		fmt.Println("Usage: sparky [options]")
 		flag.PrintDefaults()
+		os.Exit(0)
+	}
+
+	if *update {
+		currentVersion := "v1.0.0" // باید از config یا فایل بخواند، اینجا ثابت فرض شده
+		cmd := exec.Command("git", "ls-remote", "--tags", "https://github.com/lediusa/sparky.git")
+		out, err := cmd.Output()
+		if err != nil {
+			fmt.Printf("Error checking updates: %v\n", err)
+			os.Exit(1)
+		}
+		tags := strings.Split(string(out), "\n")
+		latestTag := ""
+		for _, tag := range tags {
+			if strings.HasPrefix(tag, "refs/tags/") {
+				version := strings.TrimPrefix(tag, "refs/tags/")
+				if version > latestTag && version > currentVersion {
+					latestTag = version
+				}
+			}
+		}
+		if latestTag != "" && latestTag > currentVersion {
+			fmt.Printf("New version available: %s. Run 'go install %s@%s' to update.\n", latestTag, modulePath, latestTag)
+		} else {
+			fmt.Println("You are on the latest version.")
+		}
 		os.Exit(0)
 	}
 
