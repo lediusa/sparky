@@ -1,4 +1,3 @@
-go
 module github.com/lediusa/sparky
 
 go 1.21
