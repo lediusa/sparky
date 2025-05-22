@@ -1,4 +1,3 @@
-```go
 package recon
 
 import (
@@ -32,4 +31,3 @@ func CrawlSubdomains(inputFile, outputFile string) error {
 	os.RemoveAll(outputFile + ".*")
 	return nil
 }
-```
