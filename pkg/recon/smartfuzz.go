@@ -1,4 +1,3 @@
-```go
 package recon
 
 import (
@@ -41,4 +40,3 @@ func SmartFuzzing(inputFile, fuzzFile, fuzz200File string, cfg *config.Config) (
 	}
 	return results, nil
 }
-```
