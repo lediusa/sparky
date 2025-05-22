@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"os"
 	"os/exec"
-	"sparky/pkg/config"
+	"github.com/lediusa/sparky/pkg/config"
 	"strings"
 )
 
