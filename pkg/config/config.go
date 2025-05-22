@@ -12,6 +12,7 @@ type Config struct {
 		Subdomains     string `yaml:"subdomains"`
 		Resolvers      string `yaml:"resolvers"`
 		BackupLogin    string `yaml:"backup_login"`
+		JsSmartFuzzing string `yaml:"js-smart-fuzzing"`
 		OutputDir      string `yaml:"output_dir"`
 		NucleiTemplates string `yaml:"nuclei_templates"`
 	} `yaml:"paths"`
