@@ -23,7 +23,7 @@ func CheckDependencies() error {
 		return fmt.Errorf("LinkFinder not found, run with -id")
 	}
 	if _, err := os.Stat("toolssparky/SecretFinder/SecretFinder.py"); os.IsNotExist(err) {
-		return fmt.Errorf("SecretFindermill not found, run with -id")
+		return fmt.Errorf("SecretFinder not found, run with -id")
 	}
 
 	return nil
@@ -62,19 +62,6 @@ func InstallDependencies() error {
 				}
 			}
 		}
-	}
-
-	fmt.Println("[*] Building Sparky...")
-	cmd = exec.Command("go", "build", "-o", "sparky", "cmd/sparky/main.go")
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-
-	fmt.Println("[*] Moving Sparky to /usr/local/bin...")
-	cmd = exec.Command("sudo", "mv", "sparky", "/usr/local/bin/sparky")
-	if err := cmd.Run(); err != nil {
-		fmt.Println("[*] Failed to move to /usr/local/bin. Please move manually: sudo mv sparky /usr/local/bin/sparky")
-		return err
 	}
 
 	fmt.Println("[*] Ensure other tools are installed manually: subfinder, ffuf, etc.")
