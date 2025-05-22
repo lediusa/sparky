@@ -1,4 +1,3 @@
-```go
 package main
 
 import (
@@ -129,4 +128,3 @@ func main() {
 
 	recon.RunRecon(domains, opts)
 }
-```
