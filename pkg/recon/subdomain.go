@@ -1,4 +1,3 @@
-```go
 package recon
 
 import (
@@ -33,4 +32,3 @@ func SubdomainDiscovery(domain, outputFile string, cfg *config.Config) error {
 	os.RemoveAll(outputFile + ".*")
 	return nil
 }
-```
