@@ -1,4 +1,3 @@
-```go
 package recon
 
 import (
@@ -51,4 +50,3 @@ func CompareSubdomains(activeSubdomains, vhostFile, newSubdomainsFile string) ([
 	}
 	return newSubs, nil
 }
-```
