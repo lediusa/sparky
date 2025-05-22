@@ -1,4 +1,3 @@
-```go
 package config
 
 import (
@@ -42,4 +41,3 @@ func LoadConfig() (*Config, error) {
 
 	return &cfg, nil
 }
-```
