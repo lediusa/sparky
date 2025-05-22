@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"sparky/pkg/config"
-	"sparky/pkg/deps"
-	"sparky/pkg/recon"
+	"github.com/lediusa/sparky/pkg/config"
+	"github.com/lediusa/sparky/pkg/deps"
+	"github.com/lediusa/sparky/pkg/recon"
 	"strings"
 )
 
