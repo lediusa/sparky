@@ -1,4 +1,3 @@
-```go
 package recon
 
 import (
@@ -15,4 +14,3 @@ func ScanNuclei(inputFile, outputFile string, cfg *config.Config) error {
 	}
 	return os.WriteFile(outputFile, out, 0644)
 }
-```
