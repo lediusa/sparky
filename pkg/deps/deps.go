@@ -1,4 +1,3 @@
-```go
 package deps
 
 import (
@@ -67,4 +66,3 @@ func InstallDependencies() error {
 	fmt.Println("[*] Ensure other tools are installed manually: subfinder, ffuf, etc.")
 	return nil
 }
-```
