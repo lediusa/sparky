@@ -1,4 +1,3 @@
-```yaml
 paths:
   subdomains: ./wordlists/wordlist.txt
   resolvers: ./wordlists/resolvers.txt
@@ -12,4 +11,3 @@ settings:
 tools:
   linkfinder: toolssparky/linkfinder/LinkFinder.py
   secretfinder: toolssparky/SecretFinder/SecretFinder.py
-```
