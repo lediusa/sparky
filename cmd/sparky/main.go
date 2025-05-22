@@ -24,7 +24,7 @@ const logo = `
 \033[37mSparky - Reconnaissance for Bug Hunters\033[0m
 `
 
-const modulePath = "github.com/lediusa/sparky"
+const modulePath = "github.com/lediusa/sparky/cmd/sparky"
 
 func main() {
 	fmt.Println(logo)
@@ -37,6 +37,9 @@ func main() {
 	smartFuzz := flag.Bool("sm", false, "Enable smart fuzzing on 403/404 subdomains")
 	sqli := flag.Bool("sqli", false, "Enable SQLi scanning with sqlmap")
 	nuclei := flag.Bool("nuclei", false, "Enable nuclei scanning")
+	jsFuzz := flag.Bool("jsf", false, "Enable JavaScript fuzzing (also -jsfuzzing)")
+	jsFuzzLong := flag.Bool("jsfuzzing", false, "Enable JavaScript fuzzing (same as -jsf)")
+	wcd := flag.Bool("wcd", false, "Enable Web Cache Deception testing")
 	threads := flag.Int("threads", 1, "Number of concurrent threads")
 	help := flag.Bool("h", false, "Show help")
 	flag.Parse()
@@ -48,7 +51,7 @@ func main() {
 	}
 
 	if *update {
-		currentVersion := "v1.0.0" // باید از config یا فایل بخواند، اینجا ثابت فرض شده
+		currentVersion := "v1.0.0"
 		cmd := exec.Command("git", "ls-remote", "--tags", "https://github.com/lediusa/sparky.git")
 		out, err := cmd.Output()
 		if err != nil {
@@ -117,6 +120,8 @@ func main() {
 		SmartFuzz:  *smartFuzz,
 		SQLi:       *sqli,
 		Nuclei:     *nuclei,
+		JSFuzz:     *jsFuzz || *jsFuzzLong,
+		WCD:        *wcd,
 		Threads:    *threads,
 		Config:     cfg,
 		OutputBase: os.Getenv("PWD"),
