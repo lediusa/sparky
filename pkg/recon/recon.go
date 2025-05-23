@@ -241,13 +241,3 @@ func IdentifyNonCDNIPs(ipsFile, outputDir string) ([]string, error) {
 func CheckForbiddenSubdomains(inputFile, outputFile string) error {
     return nil
 }
-
-// CompareSubdomains simulates comparing subdomains.
-func CompareSubdomains(file1, file2, outputFile string) ([]string, error) {
-    return []string{}, nil
-}
-
-// TestWebCacheDeception simulates Web Cache Deception testing.
-func TestWebCacheDeception(urlsFile, outputFile string) ([]WCDResult, error) {
-    return []WCDResult{}, nil
-}
