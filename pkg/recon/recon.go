@@ -101,6 +101,7 @@ func reconDomain(domain string, opts Options) {
     }
 
     // Check for 403/404 subdomains
+    forbiddenFile := filepath.Join(outputDir, "forbidden_subdomains.txt")
     if err := CheckForbiddenSubdomains(activeSubdomainsFile, forbiddenFile); err != nil {
         fmt.Printf("Error checking 403/404 subdomains: %v\n", err)
         return
@@ -131,7 +132,6 @@ func reconDomain(domain string, opts Options) {
     fmt.Printf("[*] Crawling subdomains for %s...\n", domain)
 
     // Extract JS URLs
-    forbiddenFile := filepath.Join(outputDir, "forbidden_subdomains.txt")
     jsUrlsFile := filepath.Join(outputDir, "js_urls.txt")
     if err := ExtractJSUrls(urlsFile, jsUrlsFile); err != nil {
         fmt.Printf("Error extracting JS URLs: %v\n", err)
@@ -220,102 +220,4 @@ func reconDomain(domain string, opts Options) {
     // Generate report
     GenerateReport(domain, outputDir, newSubdomains)
     fmt.Printf("[*] Finished processing %s\n", domain)
-}
-
-// SubdomainDiscovery simulates subdomain enumeration.
-func SubdomainDiscovery(domain, outputFile string, cfg *config.Config) error {
-    fmt.Printf("[*] Simulating subdomain discovery for %s...\n", domain)
-    return os.WriteFile(outputFile, []byte("subdomain1."+domain+"\nsubdomain2."+domain), 0644)
-}
-
-// FilterActiveSubdomains simulates filtering active subdomains.
-func FilterActiveSubdomains(inputFile, outputFile string) error {
-    fmt.Println("[*] Simulating filtering active subdomains...")
-    return os.WriteFile(outputFile, []byte("subdomain1.example.com\nsubdomain2.example.com"), 0644)
-}
-
-// ResolveIPs simulates resolving IPs for subdomains.
-func ResolveIPs(inputFile, outputFile string) error {
-    fmt.Println("[*] Simulating IP resolution...")
-    return os.WriteFile(outputFile, []byte("192.168.1.1\n192.168.1.2"), 0644)
-}
-
-// IdentifyNonCDNIPs simulates identifying non-CDN IPs.
-func IdentifyNonCDNIPs(ipsFile, outputDir string) ([]string, error) {
-    fmt.Println("[*] Simulating non-CDN IP identification...")
-    nonCDNIPs := []string{"192.168.1.1", "192.168.1.2"}
-    return nonCDNIPs, nil
-}
-
-// VhostDiscovery simulates virtual host discovery.
-func VhostDiscovery(domain string, ips []string, outputFile string, cfg *config.Config) error {
-    fmt.Printf("[*] Simulating vhost discovery for %s...\n", domain)
-    return os.WriteFile(outputFile, []byte("vhost1."+domain+"\nvhost2."+domain), 0644)
-}
-
-// CompareSubdomains simulates comparing subdomains.
-func CompareSubdomains(file1, file2, outputFile string) ([]string, error) {
-    fmt.Println("[*] Simulating subdomain comparison...")
-    newSubdomains := []string{"newsub1.example.com", "newsub2.example.com"}
-    return newSubdomains, os.WriteFile(outputFile, []byte("newsub1.example.com\nnewsub2.example.com"), 0644)
-}
-
-// CheckForbiddenSubdomains simulates checking for 403/404 subdomains.
-func CheckForbiddenSubdomains(inputFile, outputFile string) error {
-    fmt.Println("[*] Simulating checking forbidden subdomains...")
-    return os.WriteFile(outputFile, []byte("forbidden1.example.com\nforbidden2.example.com"), 0644)
-}
-
-// SmartFuzzing simulates smart fuzzing on 403/404 subdomains.
-func SmartFuzzing(inputFile, fuzzFile, fuzz200File string, cfg *config.Config) ([]string, error) {
-    fmt.Println("[*] Simulating smart fuzzing...")
-    fuzzResults := []string{"/admin", "/config"}
-    os.WriteFile(fuzzFile, []byte("/admin\n/config"), 0644)
-    os.WriteFile(fuzz200File, []byte("/admin"), 0644)
-    return fuzzResults, nil
-}
-
-// CrawlSubdomains simulates crawling subdomains.
-func CrawlSubdomains(inputFile, outputFile string) error {
-    fmt.Println("[*] Simulating crawling subdomains...")
-    return os.WriteFile(outputFile, []byte("http://subdomain1.example.com\nhttp://subdomain2.example.com"), 0644)
-}
-
-// ExtractJSUrls simulates extracting JS URLs.
-func ExtractJSUrls(inputFile, outputFile string) error {
-    fmt.Println("[*] Simulating JS URL extraction...")
-    return os.WriteFile(outputFile, []byte("http://subdomain1.example.com/script.js"), 0644)
-}
-
-// AnalyzeJSFiles simulates analyzing JS files.
-func AnalyzeJSFiles(inputFile, outputFile string, cfg *config.Config) error {
-    fmt.Println("[*] Simulating JS file analysis...")
-    return os.WriteFile(outputFile, []byte("Found API key in script.js"), 0644)
-}
-
-// AnalyzeWithGF simulates analyzing URLs with gf.
-func AnalyzeWithGF(inputFile, ssrfFile, sqliFile string) error {
-    fmt.Println("[*] Simulating GF analysis...")
-    os.WriteFile(ssrfFile, []byte("http://subdomain1.example.com/ssrf"), 0644)
-    os.WriteFile(sqliFile, []byte("http://subdomain1.example.com/sqli"), 0644)
-    return nil
-}
-
-// ScanSQLi simulates SQLi scanning.
-func ScanSQLi(inputFile, outputFile string) error {
-    fmt.Println("[*] Simulating SQLi scan...")
-    return os.WriteFile(outputFile, []byte("SQLi vulnerability found in http://subdomain1.example.com/sqli"), 0644)
-}
-
-// ScanNuclei simulates Nuclei scanning.
-func ScanNuclei(inputFile, outputFile string, cfg *config.Config) error {
-    fmt.Println("[*] Simulating Nuclei scan...")
-    return os.WriteFile(outputFile, []byte("Nuclei vulnerability found in http://subdomain1.example.com"), 0644)
-}
-
-// GenerateReport simulates generating a report.
-func GenerateReport(domain, outputDir string, newSubdomains []string) {
-    fmt.Printf("[*] Simulating report generation for %s...\n", domain)
-    reportFile := filepath.Join(outputDir, "report.txt")
-    os.WriteFile(reportFile, []byte(fmt.Sprintf("Recon report for %s\nNew subdomains: %v", domain, newSubdomains)), 0644)
 }
