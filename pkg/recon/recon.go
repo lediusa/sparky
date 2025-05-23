@@ -4,6 +4,7 @@ import (
     "fmt"
     "os"
     "path/filepath"
+    "strings"
     "sync"
     "github.com/lediusa/sparky/pkg/config"
 )
@@ -240,4 +241,21 @@ func IdentifyNonCDNIPs(ipsFile, outputDir string) ([]string, error) {
 // CheckForbiddenSubdomains simulates checking for 403/404 subdomains.
 func CheckForbiddenSubdomains(inputFile, outputFile string) error {
     return nil
+}
+
+// ReadDomainsFromFile reads a list of domains from a file.
+func ReadDomainsFromFile(filePath string) ([]string, error) {
+    data, err := os.ReadFile(filePath)
+    if err != nil {
+        return nil, fmt.Errorf("failed to read file %s: %v", filePath, err)
+    }
+    domains := strings.Split(string(data), "\n")
+    var result []string
+    for _, domain := range domains {
+        domain = strings.TrimSpace(domain)
+        if domain != "" {
+            result = append(result, domain)
+        }
+    }
+    return result, nil
 }
