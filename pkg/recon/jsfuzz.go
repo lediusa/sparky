@@ -1,13 +1,12 @@
 package recon
 
 import (
-	"bufio"
-	"fmt"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"github.com/lediusa/sparky/pkg/config"
-	"strings"
+    "bufio"
+    "fmt"
+    "os"
+    "os/exec"
+    "github.com/lediusa/sparky/pkg/config"
+    "strings"
 )
 
 func JSFuzzing(urlsFile, outputFile string, cfg *config.Config) ([]string, error) {
