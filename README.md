@@ -7,15 +7,16 @@
 go install github.com/lediusa/sparky/cmd/sparky@latest
 sparky -id
 ```
+#### git clone
+```bash
+git clone https://github.com/lediusa/sparky.git && cd sparky && go mod tidy
+go install ./cmd/sparky && sparky -h
+```
      
 #### Usage
 ```bash
 sparky -d example.com -sm -vhost -jsf -wcd
 sparky -f domains.txt -threads 5
-```
-```bash
-git clone https://github.com/lediusa/sparky.git && cd sparky && go mod tidy
-go install ./cmd/sparky && sparky -h
 ```
 
 #### Features
