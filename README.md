@@ -13,7 +13,11 @@ sparky -id
 sparky -d example.com -sm -vhost -jsf -wcd
 sparky -f domains.txt -threads 5
 ```
-     
+```bash
+git clone https://github.com/lediusa/sparky.git && cd sparky && go mod tidy
+go install ./cmd/sparky && sparky -h
+```
+
 #### Features
 
 - Subdomain enumeration
