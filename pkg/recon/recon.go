@@ -221,3 +221,33 @@ func reconDomain(domain string, opts Options) {
     GenerateReport(domain, outputDir, newSubdomains)
     fmt.Printf("[*] Finished processing %s\n", domain)
 }
+
+// FilterActiveSubdomains simulates filtering active subdomains.
+func FilterActiveSubdomains(inputFile, outputFile string) error {
+    return nil
+}
+
+// ResolveIPs simulates resolving IPs for subdomains.
+func ResolveIPs(inputFile, outputFile string) error {
+    return nil
+}
+
+// IdentifyNonCDNIPs simulates identifying non-CDN IPs.
+func IdentifyNonCDNIPs(ipsFile, outputDir string) ([]string, error) {
+    return []string{}, nil
+}
+
+// CheckForbiddenSubdomains simulates checking for 403/404 subdomains.
+func CheckForbiddenSubdomains(inputFile, outputFile string) error {
+    return nil
+}
+
+// CompareSubdomains simulates comparing subdomains.
+func CompareSubdomains(file1, file2, outputFile string) ([]string, error) {
+    return []string{}, nil
+}
+
+// TestWebCacheDeception simulates Web Cache Deception testing.
+func TestWebCacheDeception(urlsFile, outputFile string) ([]WCDResult, error) {
+    return []WCDResult{}, nil
+}
