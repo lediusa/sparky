@@ -1,14 +1,10 @@
 package recon
 
 import (
-	"bufio"
-	"fmt"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"github.com/lediusa/sparky/pkg/config"
-	"strings"
-	"sync"
+    "fmt"
+    "os"
+    "github.com/lediusa/sparky/pkg/config"
+    "sync"
 )
 
 type Options struct {
