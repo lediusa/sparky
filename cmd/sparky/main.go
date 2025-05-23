@@ -12,15 +12,17 @@ import (
 )
 
 const logo = `
-\033[32m
-   _____ _               
-  / ____| |              
- | (___ | |__   __ _ _ __   ___ _   _ 
-  \___ \| '_ \ / _` + "`" + ` | '_ \ / __| | | |
-  ____) | | | | (_| | |_) | (__| |_| |
- |_____/|_| |_|__,_|_.__/ \___|\__,_|
+    ____  ____  ____  ____  
+   /    \/    \/    \/    \ 
+  /__      ___/____    ___/ 
+ /    \  /    /    \  /    \
+/     / /    /     / /     /
+\    /_/    /\    /_/     /
+ \_________/  \_________/
+ ==========================
+       S P A R K Y
 
-\033[37mSparky - Reconnaissance for Bug Hunters\033[0m
+ Sparky - Reconnaissance for Bug Hunters
 `
 
 const modulePath = "github.com/lediusa/sparky/cmd/sparky"
