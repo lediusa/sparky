@@ -1,12 +1,11 @@
 package recon
 
 import (
-	"bufio"
-	"encoding/json"
-	"fmt"
-	"os"
-	"os/exec"
-	"strings"
+    "bufio"
+    "encoding/json"
+    "os"
+    "os/exec"
+    "strings"
 )
 
 type WCDResult struct {
