@@ -1,6 +1,6 @@
 ## Sparky
-     
-###### a Reconnaissance tool for bug hunters to perform subdomain discovery, fuzzing, and vulnerability scanning.
+
+###### a Vector analysor for bug hunters to vulnerability scanning.
      
 #### Installation
 ```bash
