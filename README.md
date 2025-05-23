@@ -1,6 +1,6 @@
 ## Sparky
 
-###### a Vector analysor for bug hunters to vulnerability scanning.
+###### A Vector analysor for bug hunters to vulnerability scanning.
      
 #### Installation
 ```bash
