@@ -5,10 +5,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 )
 
 func CheckDependencies() error {
+	// Define toolsPath
+	toolsPath := filepath.Join("toolssparky")
+
 	// List of system and Go tools to check
 	tools := []struct {
 		name    string
@@ -44,7 +46,7 @@ func CheckDependencies() error {
 	}
 
 	// Check virtual environment
-	venvPath := filepath.Join("toolssparky", "venv", "bin")
+	venvPath := filepath.Join(toolsPath, "venv", "bin")
 	if _, err := os.Stat(filepath.Join(venvPath, "python3")); os.IsNotExist(err) {
 		return fmt.Errorf("virtual environment not found in %s, run with -id to install", venvPath)
 	}
@@ -269,9 +271,9 @@ except ImportError:
     sys.exit(1)
 `, tool.name, tool.name, tool.name)
 
-		tempFile := filepath.Join(toolsPath, fmt.Sprintf("check_%s.py", tool.name))
+		tempFile := filepath.Join(toolsPath, fmt.Sprintf("check_%s.py", tool))
 		if err := os.WriteFile(tempFile, []byte(tempScript), 0644); err != nil {
-			return fmt.Errorf("failed to create temp script for %s: %v", tool.name, err)
+			return fmt.Errorf("failed to create temp script for %s: %v", tool, err)
 		}
 		defer os.Remove(tempFile)
 
