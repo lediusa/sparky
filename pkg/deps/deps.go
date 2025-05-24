@@ -10,24 +10,24 @@ import (
 func CheckDependencies() error {
 	toolsPath := filepath.Join("toolssparky")
 
-	// List of system and Go tools to check
+	// List of system and Go tools to check with appropriate test commands
 	tools := []struct {
 		name     string
 		checkCmd []string
 	}{
-		{"subfinder", []string{"subfinder", "-h"}},
+		{"subfinder", []string{"subfinder", "--version"}},
 		{"assetfinder", []string{"assetfinder", "-h"}},
-		{"amass", []string{"amass", "-h"}},
-		{"httpx", []string{"httpx", "-h"}},
-		{"dnsx", []string{"dnsx", "-h"}},
-		{"katana", []string{"katana", "-h"}},
+		{"amass", []string{"amass", "-version"}},
+		{"httpx", []string{"httpx", "--version"}},
+		{"dnsx", []string{"dnsx", "--version"}},
+		{"katana", []string{"katana", "--version"}},
 		{"waybackurls", []string{"waybackurls", "-h"}},
 		{"sqlmap", []string{"sqlmap", "--version"}},
-		{"ffuf", []string{"ffuf", "-h"}},
-		{"hakrawler", []string{"hakrawler", "-h"}},
+		{"ffuf", []string{"ffuf", "-version"}},
+		{"hakrawler", []string{"hakrawler", "-h", ""}}, // Use -h with empty arg to avoid error
 		{"anew", []string{"anew", "-h"}},
 		{"gf", []string{"gf", "-h"}},
-		{"nuclei", []string{"nuclei", "-h"}},
+		{"nuclei", []string{"nuclei", "--version"}},
 		{"nslookup", []string{"nslookup", "-version"}},
 		{"whois", []string{"whois", "--version"}},
 	}
