@@ -17,19 +17,19 @@ func CheckDependencies() error {
 	}{
 		{"subfinder", []string{"subfinder", "--version"}},
 		{"assetfinder", []string{"assetfinder", "-h"}},
-		{"amass", []string{"amass", "-version"}},
-		{"httpx", []string{"httpx", "--version"}},
-		{"dnsx", []string{"dnsx", "--version"}},
-		{"katana", []string{"katana", "--version"}},
+		{"amass", []string{"amass", "-h"}},
+		{"httpx", []string{"httpx", "-h"}},
+		{"dnsx", []string{"dnsx", "-h"}},
+		{"katana", []string{"katana", "-h"}},
 		{"waybackurls", []string{"waybackurls", "-h"}},
-		{"sqlmap", []string{"sqlmap", "--version"}},
-		{"ffuf", []string{"ffuf", "-version"}},
+		{"sqlmap", []string{"sqlmap", "-h"}},
+		{"ffuf", []string{"ffuf", "-h"}},
 		{"hakrawler", []string{"hakrawler", "-h", ""}}, // Use -h with empty arg to avoid error
 		{"anew", []string{"anew", "-h"}},
 		{"gf", []string{"gf", "-h"}},
-		{"nuclei", []string{"nuclei", "--version"}},
-		{"nslookup", []string{"nslookup", "-version"}},
-		{"whois", []string{"whois", "--version"}},
+		{"nuclei", []string{"nuclei", "-h"}},
+		{"nslookup", []string{"nslookup", "-h"}},
+		{"whois", []string{"whois", "-h"}},
 	}
 
 	for _, tool := range tools {
