@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 func CheckDependencies() error {
@@ -17,19 +18,19 @@ func CheckDependencies() error {
 	}{
 		{"subfinder", []string{"subfinder", "--version"}},
 		{"assetfinder", []string{"assetfinder", "-h"}},
-		{"amass", []string{"amass", "-h"}},
-		{"httpx", []string{"httpx", "-h"}},
-		{"dnsx", []string{"dnsx", "-h"}},
-		{"katana", []string{"katana", "-h"}},
+		{"amass", []string{"amass", "-version"}},
+		{"httpx", []string{"httpx", "--version"}},
+		{"dnsx", []string{"dnsx", "--version"}},
+		{"katana", []string{"katana", "--version"}},
 		{"waybackurls", []string{"waybackurls", "-h"}},
-		{"sqlmap", []string{"sqlmap", "-h"}},
-		{"ffuf", []string{"ffuf", "-h"}},
+		{"sqlmap", []string{"sqlmap", "--version"}},
+		{"ffuf", []string{"ffuf", "-version"}},
 		{"hakrawler", []string{"hakrawler", "-h", ""}}, // Use -h with empty arg to avoid error
 		{"anew", []string{"anew", "-h"}},
 		{"gf", []string{"gf", "-h"}},
-		{"nuclei", []string{"nuclei", "-h"}},
-		{"nslookup", []string{"nslookup", "-h"}},
-		{"whois", []string{"whois", "-h"}},
+		{"nuclei", []string{"nuclei", "--version"}},
+		{"nslookup", []string{"nslookup", "-version"}},
+		{"whois", []string{"whois", "--version"}},
 	}
 
 	for _, tool := range tools {
@@ -111,48 +112,62 @@ func InstallDependencies() error {
 
 	// Install Go-based tools
 	goTools := []struct {
-		name string
-		url  string
+		name     string
+		url      string
+		checkCmd []string
 	}{
-		{"subfinder", "github.com/projectdiscovery/subfinder/cmd/subfinder@latest"},
-		{"assetfinder", "github.com/tomnomnom/assetfinder@latest"},
-		{"amass", "github.com/OWASP/Amass/v3/...@latest"},
-		{"httpx", "github.com/projectdiscovery/httpx/cmd/httpx@latest"},
-		{"dnsx", "github.com/projectdiscovery/dnsx/cmd/dnsx@latest"},
-		{"katana", "github.com/projectdiscovery/katana/cmd/katana@latest"},
-		{"waybackurls", "github.com/tomnomnom/waybackurls@latest"},
-		{"ffuf", "github.com/ffuf/ffuf@latest"},
-		{"hakrawler", "github.com/hakluke/hakrawler@latest"},
-		{"anew", "github.com/tomnomnom/anew@latest"},
-		{"gf", "github.com/tomnomnom/gf@latest"},
-		{"nuclei", "github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest"},
+		{"subfinder", "github.com/projectdiscovery/subfinder/cmd/subfinder@latest", []string{"subfinder", "--version"}},
+		{"assetfinder", "github.com/tomnomnom/assetfinder@latest", []string{"assetfinder", "-h"}},
+		{"amass", "github.com/OWASP/Amass/v3/...@latest", []string{"amass", "-version"}},
+		{"httpx", "github.com/projectdiscovery/httpx/cmd/httpx@latest", []string{"httpx", "--version"}},
+		{"dnsx", "github.com/projectdiscovery/dnsx/cmd/dnsx@latest", []string{"dnsx", "--version"}},
+		{"katana", "github.com/projectdiscovery/katana/cmd/katana@latest", []string{"katana", "--version"}},
+		{"waybackurls", "github.com/tomnomnom/waybackurls@latest", []string{"waybackurls", "-h"}},
+		{"ffuf", "github.com/ffuf/ffuf@latest", []string{"ffuf", "-version"}},
+		{"hakrawler", "github.com/hakluke/hakrawler@latest", []string{"hakrawler", "-h", ""}},
+		{"anew", "github.com/tomnomnom/anew@latest", []string{"anew", "-h"}},
+		{"gf", "github.com/tomnomnom/gf@latest", []string{"gf", "-h"}},
+		{"nuclei", "github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest", []string{"nuclei", "--version"}},
 	}
 	for _, tool := range goTools {
 		// Check if the tool is installed and working
-		var cmd *exec.Cmd
-		if tool.name == "assetfinder" || tool.name == "anew" || tool.name == "waybackurls" {
-			cmd = exec.Command(tool.name, "-h")
-		} else {
-			cmd = exec.Command(tool.name, "--version")
-		}
-		if _, err := exec.LookPath(tool.name); err == nil && cmd.Run() == nil {
-			continue // Skip if already installed and working
+		_, err := exec.LookPath(tool.name)
+		if err != nil {
+			// If command not found, install it
+			fmt.Printf("[*] Installing %s...\n", tool.name)
+			cmd := exec.Command("go", "install", tool.url)
+			cmd.Env = append(os.Environ(), fmt.Sprintf("GOPATH=%s", gopath))
+			if err := cmd.Run(); err != nil {
+				return fmt.Errorf("failed to install %s: %v", tool.name, err)
+			}
+			// Verify installation
+			if _, err := exec.LookPath(tool.name); err != nil {
+				return fmt.Errorf("tool %s was installed but not found in PATH", tool.name)
+			}
+			continue
 		}
 
-		fmt.Printf("[*] Installing %s...\n", tool.name)
-		cmd = exec.Command("go", "install", tool.url)
-		cmd.Env = append(os.Environ(), fmt.Sprintf("GOPATH=%s", gopath))
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("failed to install %s: %v", tool.name, err)
-		}
-		// Verify installation
-		if _, err := exec.LookPath(tool.name); err != nil {
-			return fmt.Errorf("tool %s was installed but not found in PATH", tool.name)
+		// If the tool exists, test if it works
+		cmd := exec.Command(tool.checkCmd[0], tool.checkCmd[1:]...)
+		err = cmd.Run()
+		if err != nil {
+			// If the tool doesn't work, reinstall it
+			fmt.Printf("[*] Reinstalling %s (not working correctly)...\n", tool.name)
+			cmd := exec.Command("go", "install", tool.url)
+			cmd.Env = append(os.Environ(), fmt.Sprintf("GOPATH=%s", gopath))
+			if err := cmd.Run(); err != nil {
+				return fmt.Errorf("failed to reinstall %s: %v", tool.name, err)
+			}
+			// Verify reinstallation
+			if _, err := exec.LookPath(tool.name); err != nil {
+				return fmt.Errorf("tool %s was reinstalled but not found in PATH", tool.name)
+			}
 		}
 	}
 
 	// Install sqlmap using apt
-	if _, err := exec.LookPath("sqlmap"); err != nil || exec.Command("sqlmap", "--version").Run() != nil {
+	_, err := exec.LookPath("sqlmap")
+	if err != nil || exec.Command("sqlmap", "--version").Run() != nil {
 		fmt.Println("[*] Installing sqlmap...")
 		if err := exec.Command("sudo", "apt", "install", "-y", "sqlmap").Run(); err != nil {
 			return fmt.Errorf("failed to install sqlmap (try running with sudo or manually): %v", err)
@@ -194,6 +209,12 @@ func InstallDependencies() error {
 	// Install Python-based tools in the virtual environment
 	pip := filepath.Join(venvPath, "bin", "pip3")
 	python := filepath.Join(venvPath, "bin", "python3")
+	// Upgrade pip in the virtual environment to avoid dependency issues
+	fmt.Println("[*] Upgrading pip in virtual environment...")
+	if err := exec.Command(pip, "install", "--upgrade", "pip").Run(); err != nil {
+		return fmt.Errorf("failed to upgrade pip in virtual environment: %v", err)
+	}
+
 	pythonTools := []struct {
 		name      string
 		url       string
@@ -225,15 +246,28 @@ func InstallDependencies() error {
 				}
 			}
 			// Install dependencies
-			fmt.Printf("[*] Installing requirements for %s...\n", tool.name)
-			if err := exec.Command(pip, "install", "-r", filepath.Join(toolPath, "requirements.txt")).Run(); err != nil {
-				return fmt.Errorf("failed to install requirements for %s: %v", tool.name, err)
+			requirementsPath := filepath.Join(toolPath, "requirements.txt")
+			if _, err := os.Stat(requirementsPath); err == nil {
+				fmt.Printf("[*] Installing requirements for %s...\n", tool.name)
+				if err := exec.Command(pip, "install", "-r", requirementsPath).Run(); err != nil {
+					return fmt.Errorf("failed to install requirements for %s: %v", tool.name, err)
+				}
 			}
 			// Run setup.py for linkfinder
 			if tool.name == "linkfinder" {
-				fmt.Println("[*] Running setup.py for linkfinder...")
-				if err := exec.Command(python, filepath.Join(toolPath, "setup.py"), "install").Run(); err != nil {
-					return fmt.Errorf("failed to run setup.py for %s: %v", tool.name, err)
+				setupPath := filepath.Join(toolPath, "setup.py")
+				if _, err := os.Stat(setupPath); err == nil {
+					fmt.Println("[*] Running setup.py for linkfinder...")
+					// Install setuptools to ensure setup.py runs correctly
+					if err := exec.Command(pip, "install", "setuptools").Run(); err != nil {
+						return fmt.Errorf("failed to install setuptools for linkfinder: %v", err)
+					}
+					if err := exec.Command(python, setupPath, "install").Run(); err != nil {
+						// Capture more detailed error output
+						cmd := exec.Command(python, setupPath, "install")
+						output, err := cmd.CombinedOutput()
+						return fmt.Errorf("failed to run setup.py for %s: %v\nOutput: %s", tool.name, err, string(output))
+					}
 				}
 			}
 		} else if tool.pipName != "" {
