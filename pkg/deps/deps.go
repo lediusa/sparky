@@ -20,13 +20,13 @@ func CheckDependencies() error {
 		}
 	}
 
-	// Check for Python tools in virtual environment
+	// Check virtual environment
 	venvPath := filepath.Join("toolssparky", "venv", "bin")
 	if _, err := os.Stat(filepath.Join(venvPath, "python3")); os.IsNotExist(err) {
 		return fmt.Errorf("virtual environment not found in %s, run with -id to install", venvPath)
 	}
 
-	// Check if linkfinder and SecretFinder are accessible via the venv
+	// Check Python tools in virtual environment
 	python := filepath.Join(venvPath, "python3")
 	if err := exec.Command(python, "-c", "import linkfinder").Run(); err != nil {
 		return fmt.Errorf("LinkFinder not found in virtual environment, run with -id to install")
@@ -102,14 +102,15 @@ func InstallDependencies() error {
 	}
 
 	// Install Python-based tools in the virtual environment
+	pip := filepath.Join(venvPath, "bin", "pip3")
+	python := filepath.Join(venvPath, "bin", "python3")
 	pythonTools := []struct {
 		name string
 		url  string
 	}{
 		{"linkfinder", "https://github.com/GerbenJavado/LinkFinder.git"},
-		{"SecretFinder", "https://github.com/m4ll0k/SecretFinder.git"},
+		{"secretfinder", "https://github.com/m4ll0k/SecretFinder.git"},
 	}
-	pip := filepath.Join(venvPath, "bin", "pip3")
 	for _, tool := range pythonTools {
 		toolPath := filepath.Join(toolsPath, tool.name)
 		if _, err := os.Stat(toolPath); os.IsNotExist(err) {
@@ -117,8 +118,15 @@ func InstallDependencies() error {
 			if err := exec.Command("git", "clone", "--depth", "1", tool.url, toolPath).Run(); err != nil {
 				return fmt.Errorf("failed to clone %s: %v", tool.name, err)
 			}
+			// Install dependencies
 			if err := exec.Command(pip, "install", "-r", filepath.Join(toolPath, "requirements.txt")).Run(); err != nil {
 				return fmt.Errorf("failed to install requirements for %s: %v", tool.name, err)
+			}
+			// Run setup.py for linkfinder
+			if tool.name == "linkfinder" {
+				if err := exec.Command(python, filepath.Join(toolPath, "setup.py"), "install").Run(); err != nil {
+					return fmt.Errorf("failed to run setup.py for %s: %v", tool.name, err)
+				}
 			}
 		}
 	}
