@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 )
 
 func CheckDependencies() error {
+	// List of tools to check
 	tools := []string{
 		"subfinder", "assetfinder", "amass", "httpx", "dnsx", "jsbeautifier",
 		"katana", "waybackurls", "sqlmap", "ffuf", "hakrawler", "anew",
@@ -14,55 +16,113 @@ func CheckDependencies() error {
 	}
 	for _, tool := range tools {
 		if _, err := exec.LookPath(tool); err != nil {
-			return fmt.Errorf("tool %s not found, run with -id", tool)
+			return fmt.Errorf("tool %s not found, run with -id to install", tool)
 		}
 	}
 
-	if _, err := os.Stat("toolssparky/linkfinder/LinkFinder.py"); os.IsNotExist(err) {
-		return fmt.Errorf("LinkFinder not found, run with -id")
+	// Check for Python tools in virtual environment
+	venvPath := filepath.Join("toolssparky", "venv", "bin")
+	if _, err := os.Stat(filepath.Join(venvPath, "python3")); os.IsNotExist(err) {
+		return fmt.Errorf("virtual environment not found in %s, run with -id to install", venvPath)
 	}
-	if _, err := os.Stat("toolssparky/SecretFinder/SecretFinder.py"); os.IsNotExist(err) {
-		return fmt.Errorf("SecretFinder not found, run with -id")
+
+	// Check if linkfinder and SecretFinder are accessible via the venv
+	python := filepath.Join(venvPath, "python3")
+	if err := exec.Command(python, "-c", "import linkfinder").Run(); err != nil {
+		return fmt.Errorf("LinkFinder not found in virtual environment, run with -id to install")
+	}
+	if err := exec.Command(python, "-c", "import secretfinder").Run(); err != nil {
+		return fmt.Errorf("SecretFinder not found in virtual environment, run with -id to install")
 	}
 
 	return nil
 }
 
 func InstallDependencies() error {
+	// Check required base tools
 	if _, err := exec.LookPath("go"); err != nil {
 		fmt.Println("[*] Go not found. Please install Go manually from https://golang.org")
 		return err
 	}
-
-	fmt.Println("[*] Installing Go dependencies...")
-	cmd := exec.Command("go", "mod", "tidy")
-	if err := cmd.Run(); err != nil {
+	if _, err := exec.LookPath("git"); err != nil {
+		fmt.Println("[*] Git not found. Please install Git manually (e.g., sudo apt install git)")
+		return err
+	}
+	if _, err := exec.LookPath("python3"); err != nil {
+		fmt.Println("[*] Python3 not found. Please install Python3 (e.g., sudo apt install python3)")
+		return err
+	}
+	if _, err := exec.LookPath("npm"); err != nil {
+		fmt.Println("[*] npm not found. Please install Node.js and npm (e.g., sudo apt install nodejs npm)")
 		return err
 	}
 
-	tools := []struct {
+	fmt.Println("[*] Installing Go dependencies...")
+	if err := exec.Command("go", "mod", "tidy").Run(); err != nil {
+		return fmt.Errorf("failed to tidy Go modules: %v", err)
+	}
+
+	toolsPath := filepath.Join("toolssparky")
+	if err := os.MkdirAll(toolsPath, 0755); err != nil {
+		return fmt.Errorf("failed to create tools directory: %v", err)
+	}
+
+	// Install Go-based tools
+	goTools := []string{"subfinder", "assetfinder", "amass", "httpx", "dnsx", "katana", "waybackurls", "ffuf", "hakrawler", "anew", "gf", "nuclei"}
+	for _, tool := range goTools {
+		fmt.Printf("[*] Installing %s...\n", tool)
+		if err := exec.Command("go", "install", fmt.Sprintf("github.com/projectdiscovery/%s/cmd/%s@latest", tool, tool)).Run(); err != nil {
+			return fmt.Errorf("failed to install %s: %v", tool, err)
+		}
+	}
+
+	// Install jsbeautifier with npm
+	fmt.Println("[*] Installing jsbeautifier...")
+	if err := exec.Command("npm", "install", "-g", "js-beautify").Run(); err != nil {
+		return fmt.Errorf("failed to install jsbeautifier: %v", err)
+	}
+
+	// Install sqlmap using apt
+	fmt.Println("[*] Installing sqlmap...")
+	if err := exec.Command("sudo", "apt", "install", "-y", "sqlmap").Run(); err != nil {
+		return fmt.Errorf("failed to install sqlmap (try running with sudo or manually): %v", err)
+	}
+
+	// Install nslookup and whois (system tools)
+	fmt.Println("[*] Installing nslookup and whois...")
+	if err := exec.Command("sudo", "apt", "install", "-y", "dnsutils", "whois").Run(); err != nil {
+		return fmt.Errorf("failed to install dnsutils and whois (try running with sudo or manually): %v", err)
+	}
+
+	// Create a virtual environment for Python tools
+	venvPath := filepath.Join(toolsPath, "venv")
+	fmt.Println("[*] Creating virtual environment for Python tools...")
+	if err := exec.Command("python3", "-m", "venv", venvPath).Run(); err != nil {
+		return fmt.Errorf("failed to create virtual environment: %v", err)
+	}
+
+	// Install Python-based tools in the virtual environment
+	pythonTools := []struct {
 		name string
 		url  string
 	}{
 		{"linkfinder", "https://github.com/GerbenJavado/LinkFinder.git"},
 		{"SecretFinder", "https://github.com/m4ll0k/SecretFinder.git"},
 	}
-	for _, tool := range tools {
-		if _, err := os.Stat("toolssparky/" + tool.name); os.IsNotExist(err) {
+	pip := filepath.Join(venvPath, "bin", "pip3")
+	for _, tool := range pythonTools {
+		toolPath := filepath.Join(toolsPath, tool.name)
+		if _, err := os.Stat(toolPath); os.IsNotExist(err) {
 			fmt.Printf("[*] Installing %s...\n", tool.name)
-			cmd := exec.Command("git", "clone", tool.url, "toolssparky/"+tool.name)
-			if err := cmd.Run(); err != nil {
-				return err
+			if err := exec.Command("git", "clone", "--depth", "1", tool.url, toolPath).Run(); err != nil {
+				return fmt.Errorf("failed to clone %s: %v", tool.name, err)
 			}
-			if tool.name == "linkfinder" || tool.name == "SecretFinder" {
-				cmd := exec.Command("pip3", "install", "-r", "toolssparky/"+tool.name+"/requirements.txt")
-				if err := cmd.Run(); err != nil {
-					return err
-				}
+			if err := exec.Command(pip, "install", "-r", filepath.Join(toolPath, "requirements.txt")).Run(); err != nil {
+				return fmt.Errorf("failed to install requirements for %s: %v", tool.name, err)
 			}
 		}
 	}
 
-	fmt.Println("[*] Ensure other tools are installed manually: subfinder, ffuf, etc.")
+	fmt.Println("[*] Dependencies installed successfully")
 	return nil
 }
