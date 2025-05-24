@@ -160,8 +160,22 @@ func InstallDependencies() error {
 	}
 
 	// Install nslookup and whois (system tools)
-	if _, err := exec.LookPath("nslookup"); err != nil || exec.Command("nslookup", "-version").Run() != nil ||
-		_, err = exec.LookPath("whois"); err != nil || exec.Command("whois", "--version").Run() != nil {
+	needsNslookup := false
+	needsWhois := false
+
+	if _, err := exec.LookPath("nslookup"); err != nil {
+		needsNslookup = true
+	} else if err := exec.Command("nslookup", "-version").Run(); err != nil {
+		needsNslookup = true
+	}
+
+	if _, err := exec.LookPath("whois"); err != nil {
+		needsWhois = true
+	} else if err := exec.Command("whois", "--version").Run(); err != nil {
+		needsWhois = true
+	}
+
+	if needsNslookup || needsWhois {
 		fmt.Println("[*] Installing nslookup and whois...")
 		if err := exec.Command("sudo", "apt", "install", "-y", "dnsutils", "whois").Run(); err != nil {
 			return fmt.Errorf("failed to install dnsutils and whois (try running with sudo or manually): %v", err)
