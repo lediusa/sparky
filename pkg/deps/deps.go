@@ -5,22 +5,41 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 func CheckDependencies() error {
-	// List of tools to check
-	tools := []string{
-		"subfinder", "assetfinder", "amass", "httpx", "dnsx", "jsbeautifier",
-		"katana", "waybackurls", "sqlmap", "ffuf", "hakrawler", "anew",
-		"gf", "nuclei", "nslookup", "whois",
+	// List of system and Go tools to check
+	tools := []struct {
+		name    string
+		checkCmd []string
+	}{
+		{"subfinder", []string{"subfinder", "-h"}},
+		{"assetfinder", []string{"assetfinder", "-h"}},
+		{"amass", []string{"amass", "-h"}},
+		{"httpx", []string{"httpx", "-h"}},
+		{"dnsx", []string{"dnsx", "-h"}},
+		{"jsbeautifier", []string{"jsbeautifier", "-v"}},
+		{"katana", []string{"katana", "-h"}},
+		{"waybackurls", []string{"waybackurls", "-h"}},
+		{"sqlmap", []string{"sqlmap", "--version"}},
+		{"ffuf", []string{"ffuf", "-h"}},
+		{"hakrawler", []string{"hakrawler", "-h"}},
+		{"anew", []string{"anew", "-h"}},
+		{"gf", []string{"gf", "-h"}},
+		{"nuclei", []string{"nuclei", "-h"}},
+		{"nslookup", []string{"nslookup", "-version"}},
+		{"whois", []string{"whois", "--version"}},
 	}
+
 	for _, tool := range tools {
-		if _, err := exec.LookPath(tool); err != nil {
-			return fmt.Errorf("tool %s not found, run with -id to install", tool)
+		if _, err := exec.LookPath(tool.name); err != nil {
+			return fmt.Errorf("tool %s not found, run with -id to install", tool.name)
 		}
-		// Try running the tool to ensure it works
-		if err := exec.Command(tool, "--version").Run(); err != nil {
-			return fmt.Errorf("tool %s is installed but not working correctly, run with -id to reinstall: %v", tool, err)
+		// Test if the tool actually works
+		cmd := exec.Command(tool.checkCmd[0], tool.checkCmd[1:]...)
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("tool %s is installed but not working correctly, run with -id to reinstall: %v", tool.name, err)
 		}
 	}
 
@@ -32,11 +51,31 @@ func CheckDependencies() error {
 
 	// Check Python tools in virtual environment
 	python := filepath.Join(venvPath, "python3")
-	if err := exec.Command(python, "-c", "import linkfinder").Run(); err != nil {
-		return fmt.Errorf("LinkFinder not found in virtual environment, run with -id to install")
-	}
-	if err := exec.Command(python, "-c", "import secretfinder").Run(); err != nil {
-		return fmt.Errorf("SecretFinder not found in virtual environment, run with -id to install")
+	pythonTools := []string{"linkfinder", "secretfinder"}
+	for _, tool := range pythonTools {
+		// Create a temporary Python script to test the module
+		tempScript := fmt.Sprintf(`
+import sys
+try:
+    import %s
+    print("Module %s is installed")
+    sys.exit(0)
+except ImportError:
+    print("Module %s is not installed")
+    sys.exit(1)
+`, tool, tool, tool)
+
+		tempFile := filepath.Join(toolsPath, fmt.Sprintf("check_%s.py", tool))
+		if err := os.WriteFile(tempFile, []byte(tempScript), 0644); err != nil {
+			return fmt.Errorf("failed to create temp script for %s: %v", tool, err)
+		}
+		defer os.Remove(tempFile)
+
+		cmd := exec.Command(python, tempFile)
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("tool %s not found in virtual environment, run with -id to install: %s", tool, string(output))
+		}
 	}
 
 	return nil
@@ -61,6 +100,15 @@ func InstallDependencies() error {
 		return err
 	}
 
+	// Ensure GOPATH is set
+	gopath := os.Getenv("GOPATH")
+	if gopath == "" {
+		gopath = filepath.Join(os.Getenv("HOME"), "go")
+		os.Setenv("GOPATH", gopath)
+		fmt.Printf("[*] GOPATH set to %s\n", gopath)
+	}
+	os.Setenv("PATH", fmt.Sprintf("%s:%s/bin", os.Getenv("PATH"), gopath))
+
 	fmt.Println("[*] Installing Go dependencies...")
 	if err := exec.Command("go", "mod", "tidy").Run(); err != nil {
 		return fmt.Errorf("failed to tidy Go modules: %v", err)
@@ -72,18 +120,47 @@ func InstallDependencies() error {
 	}
 
 	// Install Go-based tools
-	goTools := []string{"subfinder", "assetfinder", "amass", "httpx", "dnsx", "katana", "waybackurls", "ffuf", "hakrawler", "anew", "gf", "nuclei"}
+	goTools := []struct {
+		name string
+		url  string
+	}{
+		{"subfinder", "github.com/projectdiscovery/subfinder/cmd/subfinder@latest"},
+		{"assetfinder", "github.com/tomnomnom/assetfinder@latest"},
+		{"amass", "github.com/OWASP/Amass/v3/...@latest"},
+		{"httpx", "github.com/projectdiscovery/httpx/cmd/httpx@latest"},
+		{"dnsx", "github.com/projectdiscovery/dnsx/cmd/dnsx@latest"},
+		{"katana", "github.com/projectdiscovery/katana/cmd/katana@latest"},
+		{"waybackurls", "github.com/tomnomnom/waybackurls@latest"},
+		{"ffuf", "github.com/ffuf/ffuf@latest"},
+		{"hakrawler", "github.com/hakluke/hakrawler@latest"},
+		{"anew", "github.com/tomnomnom/anew@latest"},
+		{"gf", "github.com/tomnomnom/gf@latest"},
+		{"nuclei", "github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest"},
+	}
 	for _, tool := range goTools {
-		fmt.Printf("[*] Checking %s...\n", tool)
-		if _, err := exec.LookPath(tool); err == nil {
-			if err := exec.Command(tool, "--version").Run(); err == nil {
-				fmt.Printf("[*] %s is already installed and working\n", tool)
+		fmt.Printf("[*] Checking %s...\n", tool.name)
+		if _, err := exec.LookPath(tool.name); err == nil {
+			// Try a simple command to verify it works
+			var cmd *exec.Cmd
+			if tool.name == "assetfinder" || tool.name == "anew" || tool.name == "waybackurls" {
+				cmd = exec.Command(tool.name, "-h")
+			} else {
+				cmd = exec.Command(tool.name, "--version")
+			}
+			if err := cmd.Run(); err == nil {
+				fmt.Printf("[*] %s is already installed and working\n", tool.name)
 				continue
 			}
 		}
-		fmt.Printf("[*] Installing %s...\n", tool)
-		if err := exec.Command("go", "install", fmt.Sprintf("github.com/projectdiscovery/%s/cmd/%s@latest", tool, tool)).Run(); err != nil {
-			return fmt.Errorf("failed to install %s: %v", tool, err)
+		fmt.Printf("[*] Installing %s...\n", tool.name)
+		cmd := exec.Command("go", "install", tool.url)
+		cmd.Env = append(os.Environ(), fmt.Sprintf("GOPATH=%s", gopath))
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("failed to install %s: %v", tool.name, err)
+		}
+		// Verify installation
+		if _, err := exec.LookPath(tool.name); err != nil {
+			return fmt.Errorf("tool %s was installed but not found in PATH", tool.name)
 		}
 	}
 
@@ -127,7 +204,21 @@ func InstallDependencies() error {
 	fmt.Println("[*] Checking nslookup and whois...")
 	if _, err := exec.LookPath("nslookup"); err == nil {
 		if _, err := exec.LookPath("whois"); err == nil {
-			fmt.Println("[*] nslookup and whois are already installed and working")
+			if err := exec.Command("nslookup", "-version").Run(); err == nil {
+				if err := exec.Command("whois", "--version").Run(); err == nil {
+					fmt.Println("[*] nslookup and whois are already installed and working")
+				} else {
+					fmt.Println("[*] Installing nslookup and whois...")
+					if err := exec.Command("sudo", "apt", "install", "-y", "dnsutils", "whois").Run(); err != nil {
+						return fmt.Errorf("failed to install dnsutils and whois (try running with sudo or manually): %v", err)
+					}
+				}
+			} else {
+				fmt.Println("[*] Installing nslookup and whois...")
+				if err := exec.Command("sudo", "apt", "install", "-y", "dnsutils", "whois").Run(); err != nil {
+					return fmt.Errorf("failed to install dnsutils and whois (try running with sudo or manually): %v", err)
+				}
+			}
 		} else {
 			fmt.Println("[*] Installing nslookup and whois...")
 			if err := exec.Command("sudo", "apt", "install", "-y", "dnsutils", "whois").Run(); err != nil {
@@ -166,7 +257,26 @@ func InstallDependencies() error {
 	for _, tool := range pythonTools {
 		toolPath := filepath.Join(toolsPath, tool.name)
 		fmt.Printf("[*] Checking %s...\n", tool.name)
-		if err := exec.Command(python, "-c", fmt.Sprintf("import %s", tool.name)).Run(); err == nil {
+		// Check if the module is working
+		tempScript := fmt.Sprintf(`
+import sys
+try:
+    import %s
+    print("Module %s is installed")
+    sys.exit(0)
+except ImportError:
+    print("Module %s is not installed")
+    sys.exit(1)
+`, tool.name, tool.name, tool.name)
+
+		tempFile := filepath.Join(toolsPath, fmt.Sprintf("check_%s.py", tool.name))
+		if err := os.WriteFile(tempFile, []byte(tempScript), 0644); err != nil {
+			return fmt.Errorf("failed to create temp script for %s: %v", tool.name, err)
+		}
+		defer os.Remove(tempFile)
+
+		cmd := exec.Command(python, tempFile)
+		if err := cmd.Run(); err == nil {
 			fmt.Printf("[*] %s is already installed and working in virtual environment\n", tool.name)
 			continue
 		}
