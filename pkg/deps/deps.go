@@ -79,20 +79,22 @@ func CheckDependencies() error {
 	}{
 		{"linkfinder", "linkfinder.py"},
 		{"secretfinder", "SecretFinder.py"},
-		{"jsbeautifier", "jsbeautifier"},
 	}
 	for _, tool := range pythonTools {
-		var cmd *exec.Cmd
-		if tool.name == "jsbeautifier" {
-			cmd = exec.Command(python, "-m", "jsbeautifier", "--version")
-		} else {
-			// Test by running the script with -h
-			toolPath := filepath.Join(toolsPath, tool.name, tool.checkFile)
-			cmd = exec.Command(python, toolPath, "-h")
-		}
+		toolPath := filepath.Join(toolsPath, tool.name, tool.checkFile)
+		cmd := exec.Command(python, toolPath, "-h")
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("tool %s not found or not working in virtual environment, run with -id to install: %v", tool.name, err)
 		}
+	}
+
+	// Check js-beautify (Node.js tool)
+	if _, err := exec.LookPath("js-beautify"); err != nil {
+		return fmt.Errorf("tool js-beautify not found, run with -id to install")
+	}
+	cmd := exec.Command("js-beautify", "--version")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("tool js-beautify is installed but not working correctly, run with -id to reinstall: %v", err)
 	}
 
 	return nil
@@ -110,6 +112,15 @@ func InstallDependencies() error {
 	}
 	if _, err := exec.LookPath("python3"); err != nil {
 		fmt.Println("[*] Python3 not found. Please install Python3 (e.g., sudo apt install python3)")
+		return err
+	}
+	// Check for Node.js and npm (required for js-beautify)
+	if _, err := exec.LookPath("node"); err != nil {
+		fmt.Println("[*] Node.js not found. Please install Node.js manually (e.g., sudo apt install nodejs)")
+		return err
+	}
+	if _, err := exec.LookPath("npm"); err != nil {
+		fmt.Println("[*] npm not found. Please install npm manually (e.g., sudo apt install npm)")
 		return err
 	}
 
@@ -246,48 +257,56 @@ func InstallDependencies() error {
 	pythonTools := []struct {
 		name      string
 		url       string
-		pipName   string
 		checkFile string
 	}{
-		{"linkfinder", "https://github.com/GerbenJavado/LinkFinder.git", "", "linkfinder.py"},
-		{"secretfinder", "https://github.com/m4ll0k/SecretFinder.git", "", "SecretFinder.py"},
-		{"jsbeautifier", "", "jsbeautifier", ""},
+		{"linkfinder", "https://github.com/GerbenJavado/LinkFinder.git", "linkfinder.py"},
+		{"secretfinder", "https://github.com/m4ll0k/SecretFinder.git", "SecretFinder.py"},
 	}
 	for _, tool := range pythonTools {
-		// Always attempt to install to ensure proper setup
-		if tool.url != "" {
-			toolPath := filepath.Join(toolsPath, tool.name)
-			if _, err := os.Stat(toolPath); os.IsNotExist(err) {
-				fmt.Printf("[*] Cloning %s...\n", tool.name)
-				if err := exec.Command("git", "clone", "--depth", "1", tool.url, toolPath).Run(); err != nil {
-					return fmt.Errorf("failed to clone %s: %v", tool.name, err)
-				}
+		toolPath := filepath.Join(toolsPath, tool.name)
+		if _, err := os.Stat(toolPath); os.IsNotExist(err) {
+			fmt.Printf("[*] Cloning %s...\n", tool.name)
+			if err := exec.Command("git", "clone", "--depth", "1", tool.url, toolPath).Run(); err != nil {
+				return fmt.Errorf("failed to clone %s: %v", tool.name, err)
 			}
-			requirementsPath := filepath.Join(toolPath, "requirements.txt")
-			if _, err := os.Stat(requirementsPath); err == nil {
-				fmt.Printf("[*] Installing requirements for %s...\n", tool.name)
-				if err := exec.Command(pip, "install", "-r", requirementsPath).Run(); err != nil {
-					return fmt.Errorf("failed to install requirements for %s: %v", tool.name, err)
-				}
+		}
+		requirementsPath := filepath.Join(toolPath, "requirements.txt")
+		if _, err := os.Stat(requirementsPath); err == nil {
+			fmt.Printf("[*] Installing requirements for %s...\n", tool.name)
+			if err := exec.Command(pip, "install", "-r", requirementsPath).Run(); err != nil {
+				return fmt.Errorf("failed to install requirements for %s: %v", tool.name, err)
 			}
-			// Check for setup.py and run it if exists
-			setupPath := filepath.Join(toolPath, "setup.py")
-			if _, err := os.Stat(setupPath); err == nil {
-				fmt.Printf("[*] Running setup.py for %s...\n", tool.name)
-				if err := exec.Command(pip, "install", "setuptools").Run(); err != nil {
-					return fmt.Errorf("failed to install setuptools for %s: %v", tool.name, err)
-				}
-				// Capture detailed output for debugging
-				cmd := exec.Command(python, setupPath, "install")
-				output, err := cmd.CombinedOutput()
-				if err != nil {
-					return fmt.Errorf("failed to run setup.py for %s: %v\nOutput: %s", tool.name, err, string(output))
-				}
+		}
+		// Check for setup.py and run it if exists
+		setupPath := filepath.Join(toolPath, "setup.py")
+		if _, err := os.Stat(setupPath); err == nil {
+			fmt.Printf("[*] Running setup.py for %s...\n", tool.name)
+			if err := exec.Command(pip, "install", "setuptools").Run(); err != nil {
+				return fmt.Errorf("failed to install setuptools for %s: %v", tool.name, err)
 			}
-		} else if tool.pipName != "" {
-			fmt.Printf("[*] Installing %s...\n", tool.name)
-			if err := exec.Command(pip, "install", tool.pipName).Run(); err != nil {
-				return fmt.Errorf("failed to install %s: %v", tool.name, err)
+			// Capture detailed output for debugging
+			cmd := exec.Command(python, setupPath, "install")
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				return fmt.Errorf("failed to run setup.py for %s: %v\nOutput: %s", tool.name, err, string(output))
+			}
+		}
+	}
+
+	// Install js-beautify using npm
+	_, err = exec.LookPath("js-beautify")
+	if err != nil {
+		fmt.Println("[*] Installing js-beautify...")
+		if err := exec.Command("npm", "install", "-g", "js-beautify").Run(); err != nil {
+			return fmt.Errorf("failed to install js-beautify: %v", err)
+		}
+	} else {
+		// Test if js-beautify works, reinstall if it doesn't
+		cmd := exec.Command("js-beautify", "--version")
+		if err := cmd.Run(); err != nil {
+			fmt.Println("[*] Reinstalling js-beautify (not working correctly)...")
+			if err := exec.Command("npm", "install", "-g", "js-beautify").Run(); err != nil {
+				return fmt.Errorf("failed to reinstall js-beautify: %v", err)
 			}
 		}
 	}
