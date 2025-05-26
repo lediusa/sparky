@@ -32,7 +32,6 @@ func CheckDependencies() error {
 		{"waybackurls", []string{"waybackurls", "-h"}},
 		{"sqlmap", []string{"sqlmap", "--version"}},
 		{"ffuf", []string{"ffuf", "-h"}},
-		// For hakrawler, we will handle it separately
 		{"hakrawler", nil},
 		{"anew", []string{"anew", "-h"}},
 		{"gf", []string{"gf", "-h"}},
@@ -87,10 +86,12 @@ func CheckDependencies() error {
 		if tool.name == "jsbeautifier" {
 			cmd = exec.Command(python, "-m", "jsbeautifier", "--version")
 		} else {
-			cmd = exec.Command(python, "-c", fmt.Sprintf("import %s", tool.name))
+			// Test by running the script with -h
+			toolPath := filepath.Join(toolsPath, tool.name, tool.checkFile)
+			cmd = exec.Command(python, toolPath, "-h")
 		}
 		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("tool %s not found in virtual environment, run with -id to install: %v", tool.name, err)
+			return fmt.Errorf("tool %s not found or not working in virtual environment, run with -id to install: %v", tool.name, err)
 		}
 	}
 
@@ -145,7 +146,6 @@ func InstallDependencies() error {
 		{"katana", "github.com/projectdiscovery/katana/cmd/katana@latest", []string{"katana", "-h"}},
 		{"waybackurls", "github.com/tomnomnom/waybackurls@latest", []string{"waybackurls", "-h"}},
 		{"ffuf", "github.com/ffuf/ffuf/v2@latest", []string{"ffuf", "-h"}},
-		// For hakrawler, we will handle it separately
 		{"hakrawler", "github.com/hakluke/hakrawler@latest", nil},
 		{"anew", "github.com/tomnomnom/anew@latest", []string{"anew", "-h"}},
 		{"gf", "github.com/tomnomnom/gf@latest", []string{"gf", "-h"}},
@@ -254,45 +254,40 @@ func InstallDependencies() error {
 		{"jsbeautifier", "", "jsbeautifier", ""},
 	}
 	for _, tool := range pythonTools {
-		var cmd *exec.Cmd
-		if tool.name == "jsbeautifier" {
-			cmd = exec.Command(python, "-m", "jsbeautifier", "--version")
-		} else {
-			cmd = exec.Command(python, "-c", fmt.Sprintf("import %s", tool.name))
-		}
-		if err := cmd.Run(); err != nil {
-			if tool.url != "" {
-				toolPath := filepath.Join(toolsPath, tool.name)
-				if _, err := os.Stat(toolPath); os.IsNotExist(err) {
-					fmt.Printf("[*] Cloning %s...\n", tool.name)
-					if err := exec.Command("git", "clone", "--depth", "1", tool.url, toolPath).Run(); err != nil {
-						return fmt.Errorf("failed to clone %s: %v", tool.name, err)
-					}
+		// Always attempt to install to ensure proper setup
+		if tool.url != "" {
+			toolPath := filepath.Join(toolsPath, tool.name)
+			if _, err := os.Stat(toolPath); os.IsNotExist(err) {
+				fmt.Printf("[*] Cloning %s...\n", tool.name)
+				if err := exec.Command("git", "clone", "--depth", "1", tool.url, toolPath).Run(); err != nil {
+					return fmt.Errorf("failed to clone %s: %v", tool.name, err)
 				}
-				requirementsPath := filepath.Join(toolPath, "requirements.txt")
-				if _, err := os.Stat(requirementsPath); err == nil {
-					fmt.Printf("[*] Installing requirements for %s...\n", tool.name)
-					if err := exec.Command(pip, "install", "-r", requirementsPath).Run(); err != nil {
-						return fmt.Errorf("failed to install requirements for %s: %v", tool.name, err)
-					}
+			}
+			requirementsPath := filepath.Join(toolPath, "requirements.txt")
+			if _, err := os.Stat(requirementsPath); err == nil {
+				fmt.Printf("[*] Installing requirements for %s...\n", tool.name)
+				if err := exec.Command(pip, "install", "-r", requirementsPath).Run(); err != nil {
+					return fmt.Errorf("failed to install requirements for %s: %v", tool.name, err)
 				}
-				if tool.name == "linkfinder" {
-					setupPath := filepath.Join(toolPath, "setup.py")
-					if _, err := os.Stat(setupPath); err == nil {
-						fmt.Println("[*] Running setup.py for linkfinder...")
-						if err := exec.Command(pip, "install", "setuptools").Run(); err != nil {
-							return fmt.Errorf("failed to install setuptools for linkfinder: %v", err)
-						}
-						if err := exec.Command(python, setupPath, "install").Run(); err != nil {
-							return fmt.Errorf("failed to run setup.py for %s: %v", tool.name, err)
-						}
-					}
+			}
+			// Check for setup.py and run it if exists
+			setupPath := filepath.Join(toolPath, "setup.py")
+			if _, err := os.Stat(setupPath); err == nil {
+				fmt.Printf("[*] Running setup.py for %s...\n", tool.name)
+				if err := exec.Command(pip, "install", "setuptools").Run(); err != nil {
+					return fmt.Errorf("failed to install setuptools for %s: %v", tool.name, err)
 				}
-			} else if tool.pipName != "" {
-				fmt.Printf("[*] Installing %s...\n", tool.name)
-				if err := exec.Command(pip, "install", tool.pipName).Run(); err != nil {
-					return fmt.Errorf("failed to install %s: %v", tool.name, err)
+				// Capture detailed output for debugging
+				cmd := exec.Command(python, setupPath, "install")
+				output, err := cmd.CombinedOutput()
+				if err != nil {
+					return fmt.Errorf("failed to run setup.py for %s: %v\nOutput: %s", tool.name, err, string(output))
 				}
+			}
+		} else if tool.pipName != "" {
+			fmt.Printf("[*] Installing %s...\n", tool.name)
+			if err := exec.Command(pip, "install", tool.pipName).Run(); err != nil {
+				return fmt.Errorf("failed to install %s: %v", tool.name, err)
 			}
 		}
 	}
