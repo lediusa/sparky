@@ -24,7 +24,7 @@ func CheckDependencies() error {
 		{"waybackurls", []string{"waybackurls", "-h"}},
 		{"sqlmap", []string{"sqlmap", "--version"}},
 		{"ffuf", []string{"ffuf", "-h"}},
-		{"hakrawler", []string{"hakrawler", "-h", ""}}, // Use -h with empty arg to avoid error
+		{"hakrawler", []string{"hakrawler", "-h"}}, // Use -h with empty arg to avoid error
 		{"anew", []string{"anew", "-h"}},
 		{"gf", []string{"gf", "-h"}},
 		{"nuclei", []string{"nuclei", "-h"}},
@@ -123,7 +123,7 @@ func InstallDependencies() error {
 		{"katana", "github.com/projectdiscovery/katana/cmd/katana@latest", []string{"katana", "-h"}},
 		{"waybackurls", "github.com/tomnomnom/waybackurls@latest", []string{"waybackurls", "-h"}},
 		{"ffuf", "github.com/ffuf/ffuf/v2@latest", []string{"ffuf", "-h"}},
-		{"hakrawler", "github.com/hakluke/hakrawler@latest", []string{"hakrawler", "-h", ""}},
+		{"hakrawler", "github.com/hakluke/hakrawler@latest", []string{"hakrawler", "-h"}},
 		{"anew", "github.com/tomnomnom/anew@latest", []string{"anew", "-h"}},
 		{"gf", "github.com/tomnomnom/gf@latest", []string{"gf", "-h"}},
 		{"nuclei", "github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest", []string{"nuclei", "-h"}},
