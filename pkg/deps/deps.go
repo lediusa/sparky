@@ -24,7 +24,7 @@ func CheckDependencies() error {
 		{"waybackurls", []string{"waybackurls", "-h"}},
 		{"sqlmap", []string{"sqlmap", "--version"}},
 		{"ffuf", []string{"ffuf", "-h"}},
-		{"hakrawler", []string{"hakrawler", "-h"}}, 
+		{"hakrawler", []string{"hakrawler", "-h", "User-Agent: sparky-test"}},
 		{"anew", []string{"anew", "-h"}},
 		{"gf", []string{"gf", "-h"}},
 		{"nuclei", []string{"nuclei", "-h"}},
@@ -36,9 +36,17 @@ func CheckDependencies() error {
 		if _, err := exec.LookPath(tool.name); err != nil {
 			return fmt.Errorf("tool %s not found, run with -id to install", tool.name)
 		}
-		// Test if the tool actually works
+		// Test if the tool actually works, handling -h with potential arguments
 		cmd := exec.Command(tool.checkCmd[0], tool.checkCmd[1:]...)
 		if err := cmd.Run(); err != nil {
+			// Special case for tools like hakrawler that need an argument with -h
+			if tool.name == "hakrawler" {
+				cmd = exec.Command(tool.checkCmd[0], "-h", "User-Agent: sparky-test")
+				if err := cmd.Run(); err != nil {
+					return fmt.Errorf("tool %s is installed but not working correctly, run with -id to reinstall: %v", tool.name, err)
+				}
+				continue
+			}
 			return fmt.Errorf("tool %s is installed but not working correctly, run with -id to reinstall: %v", tool.name, err)
 		}
 	}
@@ -60,7 +68,6 @@ func CheckDependencies() error {
 		{"jsbeautifier", "jsbeautifier"},
 	}
 	for _, tool := range pythonTools {
-		// Check if the module is installed by trying to run a simple command
 		var cmd *exec.Cmd
 		if tool.name == "jsbeautifier" {
 			cmd = exec.Command(python, "-m", "jsbeautifier", "--version")
@@ -123,43 +130,43 @@ func InstallDependencies() error {
 		{"katana", "github.com/projectdiscovery/katana/cmd/katana@latest", []string{"katana", "-h"}},
 		{"waybackurls", "github.com/tomnomnom/waybackurls@latest", []string{"waybackurls", "-h"}},
 		{"ffuf", "github.com/ffuf/ffuf/v2@latest", []string{"ffuf", "-h"}},
-		{"hakrawler", "github.com/hakluke/hakrawler@latest", []string{"hakrawler", "-h"}},
+		{"hakrawler", "github.com/hakluke/hakrawler@latest", []string{"hakrawler", "-h", "User-Agent: sparky-test"}},
 		{"anew", "github.com/tomnomnom/anew@latest", []string{"anew", "-h"}},
 		{"gf", "github.com/tomnomnom/gf@latest", []string{"gf", "-h"}},
 		{"nuclei", "github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest", []string{"nuclei", "-h"}},
 	}
 	for _, tool := range goTools {
-		// Check if the tool is installed and working
 		_, err := exec.LookPath(tool.name)
 		if err != nil {
-			// If command not found, install it
 			fmt.Printf("[*] Installing %s...\n", tool.name)
 			cmd := exec.Command("go", "install", tool.url)
 			cmd.Env = append(os.Environ(), fmt.Sprintf("GOPATH=%s", gopath))
 			if err := cmd.Run(); err != nil {
 				return fmt.Errorf("failed to install %s: %v", tool.name, err)
 			}
-			// Verify installation
-			if _, err := exec.LookPath(tool.name); err != nil {
-				return fmt.Errorf("tool %s was installed but not found in PATH", tool.name)
-			}
 			continue
 		}
 
-		// If the tool exists, test if it works
 		cmd := exec.Command(tool.checkCmd[0], tool.checkCmd[1:]...)
 		err = cmd.Run()
 		if err != nil {
-			// If the tool doesn't work, reinstall it
+			if tool.name == "hakrawler" {
+				cmd = exec.Command(tool.checkCmd[0], "-h", "User-Agent: sparky-test")
+				if err := cmd.Run(); err != nil {
+					fmt.Printf("[*] Reinstalling %s (not working correctly)...\n", tool.name)
+					cmd = exec.Command("go", "install", tool.url)
+					cmd.Env = append(os.Environ(), fmt.Sprintf("GOPATH=%s", gopath))
+					if err := cmd.Run(); err != nil {
+						return fmt.Errorf("failed to reinstall %s: %v", tool.name, err)
+					}
+				}
+				continue
+			}
 			fmt.Printf("[*] Reinstalling %s (not working correctly)...\n", tool.name)
-			cmd := exec.Command("go", "install", tool.url)
+			cmd = exec.Command("go", "install", tool.url)
 			cmd.Env = append(os.Environ(), fmt.Sprintf("GOPATH=%s", gopath))
 			if err := cmd.Run(); err != nil {
 				return fmt.Errorf("failed to reinstall %s: %v", tool.name, err)
-			}
-			// Verify reinstallation
-			if _, err := exec.LookPath(tool.name); err != nil {
-				return fmt.Errorf("tool %s was reinstalled but not found in PATH", tool.name)
 			}
 		}
 	}
@@ -208,7 +215,6 @@ func InstallDependencies() error {
 	// Install Python-based tools in the virtual environment
 	pip := filepath.Join(venvPath, "bin", "pip3")
 	python := filepath.Join(venvPath, "bin", "python3")
-	// Upgrade pip in the virtual environment to avoid dependency issues
 	fmt.Println("[*] Upgrading pip in virtual environment...")
 	if err := exec.Command(pip, "install", "--upgrade", "pip").Run(); err != nil {
 		return fmt.Errorf("failed to upgrade pip in virtual environment: %v", err)
@@ -217,63 +223,53 @@ func InstallDependencies() error {
 	pythonTools := []struct {
 		name      string
 		url       string
-		pipName   string // For tools installed directly via pip
-		checkFile string // For tools that have a script file
+		pipName   string
+		checkFile string
 	}{
 		{"linkfinder", "https://github.com/GerbenJavado/LinkFinder.git", "", "linkfinder.py"},
 		{"secretfinder", "https://github.com/m4ll0k/SecretFinder.git", "", "SecretFinder.py"},
 		{"jsbeautifier", "", "jsbeautifier", ""},
 	}
 	for _, tool := range pythonTools {
-		// Check if the tool is installed and working
 		var cmd *exec.Cmd
 		if tool.name == "jsbeautifier" {
 			cmd = exec.Command(python, "-m", "jsbeautifier", "--version")
 		} else {
 			cmd = exec.Command(python, "-c", fmt.Sprintf("import %s", tool.name))
 		}
-		if cmd.Run() == nil {
-			continue // Skip if already installed and working
-		}
-
-		if tool.url != "" {
-			toolPath := filepath.Join(toolsPath, tool.name)
-			if _, err := os.Stat(toolPath); os.IsNotExist(err) {
-				fmt.Printf("[*] Cloning %s...\n", tool.name)
-				if err := exec.Command("git", "clone", "--depth", "1", tool.url, toolPath).Run(); err != nil {
-					return fmt.Errorf("failed to clone %s: %v", tool.name, err)
-				}
-			}
-			// Install dependencies
-			requirementsPath := filepath.Join(toolPath, "requirements.txt")
-			if _, err := os.Stat(requirementsPath); err == nil {
-				fmt.Printf("[*] Installing requirements for %s...\n", tool.name)
-				if err := exec.Command(pip, "install", "-r", requirementsPath).Run(); err != nil {
-					return fmt.Errorf("failed to install requirements for %s: %v", tool.name, err)
-				}
-			}
-			// Run setup.py for linkfinder
-			if tool.name == "linkfinder" {
-				setupPath := filepath.Join(toolPath, "setup.py")
-				if _, err := os.Stat(setupPath); err == nil {
-					fmt.Println("[*] Running setup.py for linkfinder...")
-					// Install setuptools to ensure setup.py runs correctly
-					if err := exec.Command(pip, "install", "setuptools").Run(); err != nil {
-						return fmt.Errorf("failed to install setuptools for linkfinder: %v", err)
-					}
-					if err := exec.Command(python, setupPath, "install").Run(); err != nil {
-						// Capture more detailed error output
-						cmd := exec.Command(python, setupPath, "install")
-						output, err := cmd.CombinedOutput()
-						return fmt.Errorf("failed to run setup.py for %s: %v\nOutput: %s", tool.name, err, string(output))
+		if err := cmd.Run(); err != nil {
+			if tool.url != "" {
+				toolPath := filepath.Join(toolsPath, tool.name)
+				if _, err := os.Stat(toolPath); os.IsNotExist(err) {
+					fmt.Printf("[*] Cloning %s...\n", tool.name)
+					if err := exec.Command("git", "clone", "--depth", "1", tool.url, toolPath).Run(); err != nil {
+						return fmt.Errorf("failed to clone %s: %v", tool.name, err)
 					}
 				}
-			}
-		} else if tool.pipName != "" {
-			// Install tools like jsbeautifier directly via pip
-			fmt.Printf("[*] Installing %s...\n", tool.name)
-			if err := exec.Command(pip, "install", tool.pipName).Run(); err != nil {
-				return fmt.Errorf("failed to install %s: %v", tool.name, err)
+				requirementsPath := filepath.Join(toolPath, "requirements.txt")
+				if _, err := os.Stat(requirementsPath); err == nil {
+					fmt.Printf("[*] Installing requirements for %s...\n", tool.name)
+					if err := exec.Command(pip, "install", "-r", requirementsPath).Run(); err != nil {
+						return fmt.Errorf("failed to install requirements for %s: %v", tool.name, err)
+					}
+				}
+				if tool.name == "linkfinder" {
+					setupPath := filepath.Join(toolPath, "setup.py")
+					if _, err := os.Stat(setupPath); err == nil {
+						fmt.Println("[*] Running setup.py for linkfinder...")
+						if err := exec.Command(pip, "install", "setuptools").Run(); err != nil {
+							return fmt.Errorf("failed to install setuptools for linkfinder: %v", err)
+						}
+						if err := exec.Command(python, setupPath, "install").Run(); err != nil {
+							return fmt.Errorf("failed to run setup.py for %s: %v", tool.name, err)
+						}
+					}
+				}
+			} else if tool.pipName != "" {
+				fmt.Printf("[*] Installing %s...\n", tool.name)
+				if err := exec.Command(pip, "install", tool.pipName).Run(); err != nil {
+					return fmt.Errorf("failed to install %s: %v", tool.name, err)
+				}
 			}
 		}
 	}
