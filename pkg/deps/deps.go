@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 func CheckDependencies() error {
@@ -24,7 +25,8 @@ func CheckDependencies() error {
 		{"waybackurls", []string{"waybackurls", "-h"}},
 		{"sqlmap", []string{"sqlmap", "--version"}},
 		{"ffuf", []string{"ffuf", "-h"}},
-		{"hakrawler", []string{"hakrawler", "-h", "User-Agent: sparky-test"}},
+		// For hakrawler, we will handle it separately
+		{"hakrawler", nil},
 		{"anew", []string{"anew", "-h"}},
 		{"gf", []string{"gf", "-h"}},
 		{"nuclei", []string{"nuclei", "-h"}},
@@ -36,17 +38,23 @@ func CheckDependencies() error {
 		if _, err := exec.LookPath(tool.name); err != nil {
 			return fmt.Errorf("tool %s not found, run with -id to install", tool.name)
 		}
-		// Test if the tool actually works, handling -h with potential arguments
+
+		// Special case for hakrawler: run without flags and check output
+		if tool.name == "hakrawler" {
+			cmd := exec.Command(tool.name)
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				if strings.Contains(string(output), "No urls detected. Hint: cat urls.txt | hakrawler") {
+					continue // Tool is installed and working as expected
+				}
+				return fmt.Errorf("tool %s is installed but not working correctly, run with -id to reinstall: %v\nOutput: %s", tool.name, err, string(output))
+			}
+			continue
+		}
+
+		// Test other tools with their respective commands
 		cmd := exec.Command(tool.checkCmd[0], tool.checkCmd[1:]...)
 		if err := cmd.Run(); err != nil {
-			// Special case for tools like hakrawler that need an argument with -h
-			if tool.name == "hakrawler" {
-				cmd = exec.Command(tool.checkCmd[0], "-h", "User-Agent: sparky-test")
-				if err := cmd.Run(); err != nil {
-					return fmt.Errorf("tool %s is installed but not working correctly, run with -id to reinstall: %v", tool.name, err)
-				}
-				continue
-			}
 			return fmt.Errorf("tool %s is installed but not working correctly, run with -id to reinstall: %v", tool.name, err)
 		}
 	}
@@ -130,7 +138,8 @@ func InstallDependencies() error {
 		{"katana", "github.com/projectdiscovery/katana/cmd/katana@latest", []string{"katana", "-h"}},
 		{"waybackurls", "github.com/tomnomnom/waybackurls@latest", []string{"waybackurls", "-h"}},
 		{"ffuf", "github.com/ffuf/ffuf/v2@latest", []string{"ffuf", "-h"}},
-		{"hakrawler", "github.com/hakluke/hakrawler@latest", []string{"hakrawler", "-h", "User-Agent: sparky-test"}},
+		// For hakrawler, we will handle it separately
+		{"hakrawler", "github.com/hakluke/hakrawler@latest", nil},
 		{"anew", "github.com/tomnomnom/anew@latest", []string{"anew", "-h"}},
 		{"gf", "github.com/tomnomnom/gf@latest", []string{"gf", "-h"}},
 		{"nuclei", "github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest", []string{"nuclei", "-h"}},
@@ -147,21 +156,28 @@ func InstallDependencies() error {
 			continue
 		}
 
+		// Special case for hakrawler: run without flags and check output
+		if tool.name == "hakrawler" {
+			cmd := exec.Command(tool.name)
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				if strings.Contains(string(output), "No urls detected. Hint: cat urls.txt | hakrawler") {
+					continue // Tool is installed and working as expected
+				}
+				fmt.Printf("[*] Reinstalling %s (not working correctly)...\n", tool.name)
+				cmd = exec.Command("go", "install", tool.url)
+				cmd.Env = append(os.Environ(), fmt.Sprintf("GOPATH=%s", gopath))
+				if err := cmd.Run(); err != nil {
+					return fmt.Errorf("failed to reinstall %s: %v", tool.name, err)
+				}
+			}
+			continue
+		}
+
+		// Test other tools with their respective commands
 		cmd := exec.Command(tool.checkCmd[0], tool.checkCmd[1:]...)
 		err = cmd.Run()
 		if err != nil {
-			if tool.name == "hakrawler" {
-				cmd = exec.Command(tool.checkCmd[0], "-h", "User-Agent: sparky-test")
-				if err := cmd.Run(); err != nil {
-					fmt.Printf("[*] Reinstalling %s (not working correctly)...\n", tool.name)
-					cmd = exec.Command("go", "install", tool.url)
-					cmd.Env = append(os.Environ(), fmt.Sprintf("GOPATH=%s", gopath))
-					if err := cmd.Run(); err != nil {
-						return fmt.Errorf("failed to reinstall %s: %v", tool.name, err)
-					}
-				}
-				continue
-			}
 			fmt.Printf("[*] Reinstalling %s (not working correctly)...\n", tool.name)
 			cmd = exec.Command("go", "install", tool.url)
 			cmd.Env = append(os.Environ(), fmt.Sprintf("GOPATH=%s", gopath))
