@@ -11,6 +11,13 @@ import (
 func CheckDependencies() error {
 	toolsPath := filepath.Join("toolssparky")
 
+	// Create toolssparky directory if it doesn't exist
+	if _, err := os.Stat(toolsPath); os.IsNotExist(err) {
+		if err := os.MkdirAll(toolsPath, 0755); err != nil {
+			return fmt.Errorf("failed to create tools directory %s: %v", toolsPath, err)
+		}
+	}
+
 	// List of system and Go tools to check with appropriate test commands
 	tools := []struct {
 		name     string
