@@ -15,16 +15,16 @@ func CheckDependencies() error {
 		name     string
 		checkCmd []string
 	}{
-		{"subfinder", []string{"subfinder", "--version"}},
+		{"subfinder", []string{"subfinder", "-h"}},
 		{"assetfinder", []string{"assetfinder", "-h"}},
-		{"amass", []string{"amass", "-version"}},
-		{"httpx", []string{"httpx", "--version"}},
-		{"dnsx", []string{"dnsx", "--version"}},
-		{"katana", []string{"katana", "--version"}},
+		{"amass", []string{"amass", "-h"}},
+		{"httpx", []string{"httpx", "-h"}},
+		{"dnsx", []string{"dnsx", "-h"}},
+		{"katana", []string{"katana", "-h"}},
 		{"waybackurls", []string{"waybackurls", "-h"}},
 		{"sqlmap", []string{"sqlmap", "--version"}},
 		{"ffuf", []string{"ffuf", "-h"}},
-		{"hakrawler", []string{"hakrawler", "-h"}}, // Use -h with empty arg to avoid error
+		{"hakrawler", []string{"hakrawler", "-h"}}, 
 		{"anew", []string{"anew", "-h"}},
 		{"gf", []string{"gf", "-h"}},
 		{"nuclei", []string{"nuclei", "-h"}},
