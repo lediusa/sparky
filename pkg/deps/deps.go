@@ -23,11 +23,11 @@ func CheckDependencies() error {
 		{"katana", []string{"katana", "--version"}},
 		{"waybackurls", []string{"waybackurls", "-h"}},
 		{"sqlmap", []string{"sqlmap", "--version"}},
-		{"ffuf", []string{"ffuf", "-version"}},
+		{"ffuf", []string{"ffuf", "-h"}},
 		{"hakrawler", []string{"hakrawler", "-h", ""}}, // Use -h with empty arg to avoid error
 		{"anew", []string{"anew", "-h"}},
 		{"gf", []string{"gf", "-h"}},
-		{"nuclei", []string{"nuclei", "--version"}},
+		{"nuclei", []string{"nuclei", "-h"}},
 		{"nslookup", []string{"nslookup", "-version"}},
 		{"whois", []string{"whois", "--version"}},
 	}
@@ -115,18 +115,18 @@ func InstallDependencies() error {
 		url      string
 		checkCmd []string
 	}{
-		{"subfinder", "github.com/projectdiscovery/subfinder/cmd/subfinder@latest", []string{"subfinder", "--version"}},
+		{"subfinder", "github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest", []string{"subfinder", "-h"}},
 		{"assetfinder", "github.com/tomnomnom/assetfinder@latest", []string{"assetfinder", "-h"}},
-		{"amass", "github.com/OWASP/Amass/v3/...@latest", []string{"amass", "-version"}},
-		{"httpx", "github.com/projectdiscovery/httpx/cmd/httpx@latest", []string{"httpx", "--version"}},
-		{"dnsx", "github.com/projectdiscovery/dnsx/cmd/dnsx@latest", []string{"dnsx", "--version"}},
-		{"katana", "github.com/projectdiscovery/katana/cmd/katana@latest", []string{"katana", "--version"}},
+		{"amass", "github.com/owasp-amass/amass/v4/...@master", []string{"amass", "-h"}},
+		{"httpx", "github.com/projectdiscovery/httpx/cmd/httpx@latest", []string{"httpx", "-h"}},
+		{"dnsx", "github.com/projectdiscovery/dnsx/cmd/dnsx@latest", []string{"dnsx", "-h"}},
+		{"katana", "github.com/projectdiscovery/katana/cmd/katana@latest", []string{"katana", "-h"}},
 		{"waybackurls", "github.com/tomnomnom/waybackurls@latest", []string{"waybackurls", "-h"}},
-		{"ffuf", "github.com/ffuf/ffuf@latest", []string{"ffuf", "-version"}},
+		{"ffuf", "github.com/ffuf/ffuf/v2@latest", []string{"ffuf", "-h"}},
 		{"hakrawler", "github.com/hakluke/hakrawler@latest", []string{"hakrawler", "-h", ""}},
 		{"anew", "github.com/tomnomnom/anew@latest", []string{"anew", "-h"}},
 		{"gf", "github.com/tomnomnom/gf@latest", []string{"gf", "-h"}},
-		{"nuclei", "github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest", []string{"nuclei", "--version"}},
+		{"nuclei", "github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest", []string{"nuclei", "-h"}},
 	}
 	for _, tool := range goTools {
 		// Check if the tool is installed and working
