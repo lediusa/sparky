@@ -297,7 +297,7 @@ func InstallDependencies() error {
 	_, err = exec.LookPath("js-beautify")
 	if err != nil {
 		fmt.Println("[*] Installing js-beautify...")
-		if err := exec.Command("npm", "install", "-g", "js-beautify").Run(); err != nil {
+		if err := exec.Command("npm", "install", "js-beautify").Run(); err != nil {
 			return fmt.Errorf("failed to install js-beautify: %v", err)
 		}
 	} else {
