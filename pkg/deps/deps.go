@@ -89,10 +89,11 @@ func CheckDependencies() error {
 	}
 
 	// Check js-beautify (Node.js tool)
-	if _, err := exec.LookPath("js-beautify"); err != nil {
+	jsBeautifyPath, err := exec.LookPath("js-beautify")
+	if err != nil {
 		return fmt.Errorf("tool js-beautify not found, run with -id to install")
 	}
-	cmd := exec.Command("js-beautify", "--version")
+	cmd := exec.Command(jsBeautifyPath, "-h")
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("tool js-beautify is installed but not working correctly, run with -id to reinstall: %v", err)
 	}
@@ -293,20 +294,30 @@ func InstallDependencies() error {
 		}
 	}
 
-	// Install js-beautify using npm
+	// Install js-beautify using npm with sudo
 	_, err = exec.LookPath("js-beautify")
 	if err != nil {
-		fmt.Println("[*] Installing js-beautify...")
-		if err := exec.Command("npm", "install", "js-beautify").Run(); err != nil {
-			return fmt.Errorf("failed to install js-beautify: %v", err)
+		fmt.Println("[*] Installing js-beautify with sudo...")
+		// Use sudo for global npm install
+		cmd := exec.Command("sudo", "npm", "install", "-g", "js-beautify")
+		cmd.Stdin = os.Stdin // Allow user to enter sudo password if needed
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("failed to install js-beautify with sudo: %v", err)
 		}
 	} else {
 		// Test if js-beautify works, reinstall if it doesn't
-		cmd := exec.Command("js-beautify", "--version")
+		jsBeautifyPath, _ := exec.LookPath("js-beautify")
+		cmd := exec.Command(jsBeautifyPath, "-h")
 		if err := cmd.Run(); err != nil {
-			fmt.Println("[*] Reinstalling js-beautify (not working correctly)...")
-			if err := exec.Command("npm", "install", "-g", "js-beautify").Run(); err != nil {
-				return fmt.Errorf("failed to reinstall js-beautify: %v", err)
+			fmt.Println("[*] Reinstalling js-beautify with sudo (not working correctly)...")
+			cmd = exec.Command("sudo", "npm", "install", "-g", "js-beautify")
+			cmd.Stdin = os.Stdin
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			if err := cmd.Run(); err != nil {
+				return fmt.Errorf("failed to reinstall js-beautify with sudo: %v", err)
 			}
 		}
 	}
